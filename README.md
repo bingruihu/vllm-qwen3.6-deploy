@@ -275,7 +275,59 @@ ssh -N -L 18000:127.0.0.1:18000 YOUR_USERNAME@YOUR_SERVER_IP
 
 ---
 
-### 5.4 在第三方客户端中使用(直连模式)
+### 5.4 通过 SSH 反向隧道将本地 vLLM 共享给远程服务器(openclaw)
+
+如果你希望将本机(或本地网络内)运行的 vLLM 服务通过 SSH 反向端口转发暴露给另一台远程服务器(如 `REMOTE_SERVER_IP`),让该服务器的 root 用户也能访问本地 vLLM。
+
+#### 5.4.1 建立反向隧道
+
+在**本机**执行:
+
+```bash
+ssh -N -f -R 18000:localhost:18000 root@REMOTE_SERVER_IP
+```
+
+| 参数 | 说明 |
+|------|------|
+| `-N` | 不打开远程 shell,仅转发端口 |
+| `-f` | 后台运行 |
+| `-R 18000:localhost:18000` | 远程服务器 18000 → 本机 localhost 18000 |
+
+#### 5.4.2 验证连接
+
+在 **REMOTE_SERVER_IP** 上执行:
+
+```bash
+# v1 模型列表接口
+curl http://localhost:18000/v1/models
+
+# 对话测试
+curl http://localhost:18000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "qwen3.6-35b",
+    "messages": [{"role":"user","content":"你好"}],
+    "max_tokens": 256
+  }'
+```
+
+> ⚠️ **注意**: 不要使用 `/models` 路径(vLLM 不是这个端点),正确路径为 `/v1/models`。
+
+#### 5.4.3 断开隧道
+
+```bash
+# 方法 1: 通过 SSH 控制连接关闭
+ssh -O stop -R 18000:localhost:18000 root@REMOTE_SERVER_IP
+
+# 方法 2: kill 隧道进程
+pkill -f "18000:localhost:18000"
+```
+
+> 💡 隧道只是临时连接,断开后重新建立即可。服务本身不受影响,客户端会因连接失败而报错,隧道恢复后自动恢复。
+
+---
+
+### 5.5 在第三方客户端中使用(直连模式)
 
 如果已在服务器上架放防火墙(`sudo ufw allow 18000/tcp`),可以直接访问:
 
