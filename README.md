@@ -100,7 +100,8 @@ docker run -d \
   --enable-prefix-caching \
   --enable-chunked-prefill \
   --max-num-seqs 8 \
-  --block-size 32
+  --block-size 32 \
+  --speculative-config '{"method":"mtp","num_speculative_tokens":4}'
 ```
 
 **参数说明:**
@@ -138,26 +139,29 @@ docker run -d \
 ```bash
 docker run -d \
   --name qwen27b-vllm \
-  --gpus '"device=5"' \
+  --gpus '"device=4"' \
   --ipc=host \
   --restart=no \
   -p 28000:8000 \
   -v /home/$USER/WorkStation/Vllm/models:/models:ro \
   vllm/vllm-openai:v0.23.0-ubuntu2404 \
-  --model /models/Qwen36-27B \
+  --model /models/Qwen36-27B-FP8 \
   --served-model-name qwen3.6-27b \
   --host 0.0.0.0 \
   --port 8000 \
   --max-model-len 262144 \
-  --gpu-memory-utilization 0.95 \
+  --max-num-batched-tokens 8192 \
+  --gpu-memory-utilization 0.9 \
   --dtype bfloat16 \
+  --quantization fp8 \
   --enable-auto-tool-choice \
   --tool-call-parser qwen3_coder \
   --reasoning-parser qwen3 \
   --enable-prefix-caching \
   --enable-chunked-prefill \
-  --max-num-seqs 8 \
-  --block-size 32
+  --max-num-seqs 32 \
+  --block-size 16 \
+  --speculative-config '{"method":"mtp","num_speculative_tokens":4}'
 ```
 
 > ⚠️ **与 35B-A3B-FP8 的差异**:

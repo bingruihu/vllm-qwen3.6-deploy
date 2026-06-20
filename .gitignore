@@ -20,3 +20,6 @@ __pycache__/
 # Env / credentials
 .env
 .env.*
+*.tar
+*.gz
+*.tar.gz
